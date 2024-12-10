@@ -1,0 +1,36 @@
+requests
+beautifulsoup4
+pandas
+schedule
+
+
+#bash
+pip install -r requirements.txt
+
+
+#python
+import subprocess
+
+# List of packages to install
+packages = [
+    "requests",
+    "beautifulsoup4",
+    "pandas",
+    "schedule"
+]
+
+# Install each package
+for package in packages:
+    try:
+        subprocess.run(["pip", "install", package], check=True)
+        print(f"Successfully installed {package}")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to install {package}: {e}")
+
+
+#run in bash
+python install_dependencies.py
+
+#confirm install
+
+pip list
