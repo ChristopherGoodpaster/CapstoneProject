@@ -9,7 +9,7 @@ def run_price_script():
 
 # Schedule the job at 7:00 AM, 1:00 PM, 7:00 PM, and 1:00 AM EST every day
 # This assumes your server/computer is set to EST. If not, adjust accordingly or use a fixed timezone solution.
-schedule.every().day.at("07:00").do(run_price_script)
+schedule.every().day.at("09:00").do(run_price_script)
 schedule.every().day.at("13:00").do(run_price_script)
 schedule.every().day.at("19:00").do(run_price_script)
 schedule.every().day.at("01:00").do(run_price_script)
