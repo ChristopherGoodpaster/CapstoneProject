@@ -5,15 +5,15 @@ import matplotlib.dates as mdates
 
 # Load historical data from CSV
 df = pd.read_csv('price_history.csv')
-df['date'] = pd.to_datetime(df['date'])
+df['date'] = pd.to_datetime(df['date_only'])
 
 unique_products = df['title'].unique()
 
 # Visualization 1: Line Plot
-plt.figure(figsize=(10,6))
+plt.figure(figsize=(10, 6))
 for product in unique_products:
     product_data = df[df['title'] == product].sort_values(by='date')
-    short_label = ' '.join(product.split()[:4])
+    short_label = ' '.join(product.split()[:4])  # Shorten product name for legend
     plt.plot(product_data['date'], product_data['price'], marker='o', linestyle='-', label=short_label)
 
 plt.title("Historical Price Tracking for Multiple Products")

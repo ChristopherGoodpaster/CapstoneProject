@@ -5,6 +5,10 @@ from datetime import datetime
 import pandas as pd
 
 def fetch_amazon_data(url, headers):
+    """
+    Fetches product data from an Amazon product page.
+    Returns a dictionary with title and price.
+    """
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -21,13 +25,20 @@ def fetch_amazon_data(url, headers):
         else:
             price = None
 
-        return {'title': title, 'price': price}
+        return {
+            'title': title,
+            'price': price
+        }
     else:
         raise Exception(f"Failed to fetch the page. Status code: {response.status_code}")
 
 def initialize_database(db_name='amazon_tracker.db'):
+    """
+    Initializes the SQLite database to store product data.
+    """
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
+    cursor.execute('DROP TABLE IF EXISTS products')  # Drop existing table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,6 +51,9 @@ def initialize_database(db_name='amazon_tracker.db'):
     conn.close()
 
 def store_data_in_db(data, db_name='amazon_tracker.db'):
+    """
+    Stores product data into the database.
+    """
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('''
@@ -50,6 +64,9 @@ def store_data_in_db(data, db_name='amazon_tracker.db'):
     conn.close()
 
 def fetch_price_history(db_name='amazon_tracker.db'):
+    """
+    Fetches the price history of all products from the database.
+    """
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('SELECT title, price, date FROM products ORDER BY date ASC')
@@ -58,6 +75,9 @@ def fetch_price_history(db_name='amazon_tracker.db'):
     return rows
 
 def main():
+    """
+    Main function to fetch product data, store it in the database, and export it to CSV.
+    """
     product_urls = [
         "https://www.amazon.com/Ring-Battery-Doorbell-Head-to-Toe-Video-Satin-Nickel/dp/B0BZWRSRWV?ref=dlx_cyber_dg_dcl_B0BZWRSRWV_dt_sl7_1a",
         "https://www.amazon.com/dp/B09HMV6K1W",
@@ -71,7 +91,6 @@ def main():
 
     initialize_database()
 
-    # Fetch and store each product
     for url in product_urls:
         try:
             product_data = fetch_amazon_data(url, headers)
@@ -83,11 +102,10 @@ def main():
         except Exception as e:
             print(f"Error fetching URL {url}: {e}")
 
-    # Fetch full price history and export to CSV
     history = fetch_price_history()
     if history:
         df = pd.DataFrame(history, columns=["title", "price", "date"])
-        
+
         # Convert date column to a datetime object
         df['date'] = pd.to_datetime(df['date'])
 
@@ -95,15 +113,21 @@ def main():
         df['date_only'] = df['date'].dt.date
         df['time_only'] = df['date'].dt.time
 
-        # If you don't need the original 'date' column, uncomment the next line
-        # df.drop('date', axis=1, inplace=True)
+        # Load existing CSV if it exists
+        csv_file = 'price_history.csv'
+        try:
+            existing_df = pd.read_csv(csv_file)
+            combined_df = pd.concat([existing_df, df], ignore_index=True)
+            combined_df.drop_duplicates(subset=["title", "price", "date_only", "time_only"], inplace=True)
+        except FileNotFoundError:
+            combined_df = df
 
-        # Save to CSV with separate date and time columns
-        df.to_csv('price_history.csv', index=False)
-        print("Price history has been saved to price_history.csv")
+        # Save only the required columns to the CSV
+        combined_df = combined_df[["title", "price", "date_only", "time_only"]]
+        combined_df.to_csv('price_history.csv', index=False)
+        print("Price history has been updated and saved to price_history.csv")
     else:
         print("No data found in database.")
 
 if __name__ == "__main__":
     main()
-
