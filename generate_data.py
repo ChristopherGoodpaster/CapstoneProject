@@ -23,7 +23,6 @@ def fetch_amazon_data(url, headers):
 
         return {'title': title, 'price': price}
     else:
-        # If we fail to fetch the page, raise an exception with the status code
         raise Exception(f"Failed to fetch the page. Status code: {response.status_code}")
 
 def initialize_database(db_name='amazon_tracker.db'):
@@ -59,13 +58,10 @@ def fetch_price_history(db_name='amazon_tracker.db'):
     return rows
 
 def main():
-    # List of product URLs (use simple dp/ASIN format)
     product_urls = [
-        "https://www.amazon.com/Ring-Battery-Doorbell-Head-to-Toe-Video-Satin-Nickel/dp/B0BZWRSRWV?ref=dlx_cyber_dg_dcl_B0BZWRSRWV_dt_sl7_1a", # Example product
-        # Add more product URLs here
-         "https://www.amazon.com/dp/B09HMV6K1W",  # Logitech Wireless Bluetooth Mouse
-        "https://www.amazon.com/dp/B0BG1X8JGV"   # MOUNTAIN DISPLAYPAD
-        # "https://www.amazon.com/Ring-Battery-Doorbell-Head-to-Toe-Video-Satin-Nickel/dp/B0BZWRSRWV?ref=dlx_cyber_dg_dcl_B0BZWRSRWV_dt_sl7_1a", # Example second product
+        "https://www.amazon.com/Ring-Battery-Doorbell-Head-to-Toe-Video-Satin-Nickel/dp/B0BZWRSRWV?ref=dlx_cyber_dg_dcl_B0BZWRSRWV_dt_sl7_1a",
+        "https://www.amazon.com/dp/B09HMV6K1W",
+        "https://www.amazon.com/dp/B0BG1X8JGV"
     ]
 
     headers = {
@@ -75,7 +71,7 @@ def main():
 
     initialize_database()
 
-    # Attempt to fetch and store each product
+    # Fetch and store each product
     for url in product_urls:
         try:
             product_data = fetch_amazon_data(url, headers)
@@ -91,6 +87,18 @@ def main():
     history = fetch_price_history()
     if history:
         df = pd.DataFrame(history, columns=["title", "price", "date"])
+        
+        # Convert date column to a datetime object
+        df['date'] = pd.to_datetime(df['date'])
+
+        # Create separate columns for date and time
+        df['date_only'] = df['date'].dt.date
+        df['time_only'] = df['date'].dt.time
+
+        # If you don't need the original 'date' column, uncomment the next line
+        # df.drop('date', axis=1, inplace=True)
+
+        # Save to CSV with separate date and time columns
         df.to_csv('price_history.csv', index=False)
         print("Price history has been saved to price_history.csv")
     else:
@@ -98,3 +106,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
