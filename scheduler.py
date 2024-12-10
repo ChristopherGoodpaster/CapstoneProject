@@ -4,17 +4,19 @@ import subprocess
 
 # Function to run your generate_data.py script
 def run_price_script():
-    # Replace with the actual path to your Python interpreter and script if needed
-    subprocess.run(["python", "generate_data.py"], check=True)
+    try:
+        print(f"Running generate_data.py at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        subprocess.run(["python", "generate_data.py"], check=True)
+        print("Script executed successfully.\n")
+    except Exception as e:
+        print(f"Error running script: {e}\n")
 
-# Schedule the job at 7:00 AM, 1:00 PM, 7:00 PM, and 1:00 AM EST every day
-# This assumes your server/computer is set to EST. If not, adjust accordingly or use a fixed timezone solution.
-schedule.every().day.at("09:00").do(run_price_script)
-schedule.every().day.at("13:00").do(run_price_script)
-schedule.every().day.at("19:00").do(run_price_script)
-schedule.every().day.at("01:00").do(run_price_script)
+# Schedule the job to run every 1 minutes
+schedule.every(1).minutes.do(run_price_script)
+
 
 # Keep the script running indefinitely
+print("Scheduler is running. Press Ctrl+C to stop.")
 while True:
     schedule.run_pending()
-    time.sleep(60)  # check every minute
+    time.sleep(60)  # Check every minute
