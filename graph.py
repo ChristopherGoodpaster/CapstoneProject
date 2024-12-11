@@ -5,10 +5,20 @@ import matplotlib.dates as mdates
 from tkinter import Tk, Listbox, Button, Label, MULTIPLE, messagebox
 
 def load_data(csv_file):
-    """Loads historical price data from the CSV."""
+    """Loads historical price data from the CSV and removes rows with NaN nicknames."""
     try:
         df = pd.read_csv(csv_file)
         df['date_only'] = pd.to_datetime(df['date_only'])
+
+        # Check for NaN in the nickname column
+        if df['nickname'].isna().any():
+            print("Found rows with NaN in the 'nickname' column. Removing them...")
+            df = df.dropna(subset=['nickname'])
+
+            # Save the cleaned data back to the CSV
+            df.to_csv(csv_file, index=False)
+            print("Cleaned dataset saved back to the CSV.")
+
         return df
     except FileNotFoundError:
         messagebox.showerror("Error", f"File '{csv_file}' not found!")
