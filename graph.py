@@ -44,5 +44,18 @@ plt.ylabel("Price ($)")
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 
+# Reshape data for heatmap
+heatmap_data = df.pivot_table(index='date_only', columns='title', values='price', aggfunc='mean')
+
+# Plot heatmap
+plt.figure(figsize=(10, 8))
+sns.heatmap(heatmap_data, annot=True, fmt=".2f", cmap="coolwarm")
+plt.title("Heatmap of Average Prices Over Time")
+plt.xlabel("Products")
+plt.ylabel("Date")
+plt.tight_layout()
+plt.show()
+
+
 # Call show only once, after all figures are created
 plt.show()
