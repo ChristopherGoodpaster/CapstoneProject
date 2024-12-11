@@ -1,28 +1,31 @@
-nickname,title,price,date_only,time_only
-,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,2024-12-10,18:11:47.554965
-,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,2024-12-10,18:11:50.606187
-,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,2024-12-10,18:11:52.846926
-,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,2024-12-10,18:16:50.683453
-,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,2024-12-10,18:16:53.864376
-,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,2024-12-10,18:16:56.143826
-,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,2024-12-10,18:22:07.325512
-,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,2024-12-10,18:22:10.440570
-,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,2024-12-10,18:22:12.495219
-,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,2024-12-10,19:07:43.372947
-,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,2024-12-10,19:07:46.362885
-,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,2024-12-10,19:07:48.555739
-,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,2024-12-10,19:14:52.279112
-,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,2024-12-10,19:14:55.428282
-,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,2024-12-10,19:14:57.690450
-,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,2024-12-10,19:15:09.676177
-,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,2024-12-10,19:15:12.816586
-,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,2024-12-10,19:15:15.016075
-,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,2024-12-10,19:32:29.718593
-,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,2024-12-10,19:32:33.054195
-,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,2024-12-10,19:32:35.366303
-ring,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,2024-12-10,19:52:04.473073
-mouse,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,2024-12-10,19:52:07.640744
-display_pad,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,2024-12-10,19:52:09.964351
-ring,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,2024-12-10,19:55:17.669516
-mouse,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,2024-12-10,19:55:20.926488
-display_pad,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,2024-12-10,19:55:23.151047
+nickname,title,price,url,date_only,time_only
+,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,,2024-12-10,18:11:47.554965
+,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,,2024-12-10,18:11:50.606187
+,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,,2024-12-10,18:11:52.846926
+,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,,2024-12-10,18:16:50.683453
+,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,,2024-12-10,18:16:53.864376
+,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,,2024-12-10,18:16:56.143826
+,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,,2024-12-10,18:22:07.325512
+,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,,2024-12-10,18:22:10.440570
+,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,,2024-12-10,18:22:12.495219
+,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,,2024-12-10,19:07:43.372947
+,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,,2024-12-10,19:07:46.362885
+,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,,2024-12-10,19:07:48.555739
+,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,,2024-12-10,19:14:52.279112
+,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,,2024-12-10,19:14:55.428282
+,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,,2024-12-10,19:14:57.690450
+,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,,2024-12-10,19:15:09.676177
+,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,,2024-12-10,19:15:12.816586
+,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,,2024-12-10,19:15:15.016075
+,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,,2024-12-10,19:32:29.718593
+,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,,2024-12-10,19:32:33.054195
+,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,,2024-12-10,19:32:35.366303
+ring,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,,2024-12-10,19:52:04.473073
+mouse,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,,2024-12-10,19:52:07.640744
+display_pad,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,,2024-12-10,19:52:09.964351
+ring,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,,2024-12-10,19:55:17.669516
+mouse,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,,2024-12-10,19:55:20.926488
+display_pad,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,,2024-12-10,19:55:23.151047
+ring,"All-new Ring Battery Doorbell, Head-to-Toe Video, Live View with Two-Way Talk, and Motion Detection & Alerts (2024 release), Satin Nickel",59.99,https://www.amazon.com/Ring-Battery-Doorbell-Head-to-Toe-Video-Satin-Nickel/dp/B0BZWRSRWV?ref=dlx_cyber_dg_dcl_B0BZWRSRWV_dt_sl7_1a,2024-12-10,20:01:13.622440
+mouse,"Logitech MX Master 3S for Mac - Wireless Bluetooth Mouse with Ultra-Fast Scrolling, Ergo, 8K DPI, Quiet Clicks, Track on Glass, Customization, USB-C, Apple, iPad - Space Grey",80.74,https://www.amazon.com/dp/B09HMV6K1W,2024-12-10,20:01:16.925539
+display_pad,MOUNTAIN DISPLAYPAD - The Streaming and Content Creation Controller with 12 Customizable Tactile Display Keys,39.99,https://www.amazon.com/dp/B0BG1X8JGV,2024-12-10,20:01:19.249920

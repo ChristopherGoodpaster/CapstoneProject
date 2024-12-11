@@ -14,7 +14,7 @@ PRODUCT_NICKNAMES = {
 def fetch_amazon_data(url, headers):
     """
     Fetches product data from an Amazon product page.
-    Returns a dictionary with nickname, title, and price.
+    Returns a dictionary with nickname, title, price, and url.
     """
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -35,7 +35,8 @@ def fetch_amazon_data(url, headers):
         return {
             'nickname': PRODUCT_NICKNAMES.get(url, "unknown"),
             'title': title,
-            'price': price
+            'price': price,
+            'url': url
         }
     else:
         raise Exception(f"Failed to fetch the page. Status code: {response.status_code}")
@@ -53,6 +54,7 @@ def initialize_database(db_name='amazon_tracker.db'):
             nickname TEXT,
             title TEXT,
             price REAL,
+            url TEXT,
             date TIMESTAMP
         )
     ''')
@@ -66,9 +68,9 @@ def store_data_in_db(data, db_name='amazon_tracker.db'):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO products (nickname, title, price, date)
-        VALUES (?, ?, ?, ?)
-    ''', (data['nickname'], data['title'], data['price'], datetime.now()))
+        INSERT INTO products (nickname, title, price, url, date)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (data['nickname'], data['title'], data['price'], data['url'], datetime.now()))
     conn.commit()
     conn.close()
 
@@ -78,7 +80,7 @@ def fetch_price_history(db_name='amazon_tracker.db'):
     """
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
-    cursor.execute('SELECT nickname, title, price, date FROM products ORDER BY date ASC')
+    cursor.execute('SELECT nickname, title, price, url, date FROM products ORDER BY date ASC')
     rows = cursor.fetchall()
     conn.close()
     return rows
@@ -113,7 +115,7 @@ def main():
 
     history = fetch_price_history()
     if history:
-        df = pd.DataFrame(history, columns=["nickname", "title", "price", "date"])
+        df = pd.DataFrame(history, columns=["nickname", "title", "price", "url", "date"])
 
         # Convert date column to a datetime object
         df['date'] = pd.to_datetime(df['date'])
@@ -131,8 +133,8 @@ def main():
         except FileNotFoundError:
             combined_df = df
 
-        # Save only the required columns to the CSV
-        combined_df = combined_df[["nickname", "title", "price", "date_only", "time_only"]]
+        # Save to the CSV with the new URL column
+        combined_df = combined_df[["nickname", "title", "price", "url", "date_only", "time_only"]]
         combined_df.to_csv('price_history.csv', index=False)
         print("Price history has been updated and saved to price_history.csv")
     else:
