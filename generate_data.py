@@ -4,10 +4,17 @@ import sqlite3
 from datetime import datetime
 import pandas as pd
 
+# Dictionary mapping product URLs to nicknames
+PRODUCT_NICKNAMES = {
+    "https://www.amazon.com/Ring-Battery-Doorbell-Head-to-Toe-Video-Satin-Nickel/dp/B0BZWRSRWV?ref=dlx_cyber_dg_dcl_B0BZWRSRWV_dt_sl7_1a": "ring",
+    "https://www.amazon.com/dp/B09HMV6K1W": "mouse",
+    "https://www.amazon.com/dp/B0BG1X8JGV": "display_pad"
+}
+
 def fetch_amazon_data(url, headers):
     """
     Fetches product data from an Amazon product page.
-    Returns a dictionary with title and price.
+    Returns a dictionary with nickname, title, and price.
     """
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -26,6 +33,7 @@ def fetch_amazon_data(url, headers):
             price = None
 
         return {
+            'nickname': PRODUCT_NICKNAMES.get(url, "unknown"),
             'title': title,
             'price': price
         }
@@ -42,6 +50,7 @@ def initialize_database(db_name='amazon_tracker.db'):
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nickname TEXT,
             title TEXT,
             price REAL,
             date TIMESTAMP
@@ -57,9 +66,9 @@ def store_data_in_db(data, db_name='amazon_tracker.db'):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO products (title, price, date)
-        VALUES (?, ?, ?)
-    ''', (data['title'], data['price'], datetime.now()))
+        INSERT INTO products (nickname, title, price, date)
+        VALUES (?, ?, ?, ?)
+    ''', (data['nickname'], data['title'], data['price'], datetime.now()))
     conn.commit()
     conn.close()
 
@@ -69,7 +78,7 @@ def fetch_price_history(db_name='amazon_tracker.db'):
     """
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
-    cursor.execute('SELECT title, price, date FROM products ORDER BY date ASC')
+    cursor.execute('SELECT nickname, title, price, date FROM products ORDER BY date ASC')
     rows = cursor.fetchall()
     conn.close()
     return rows
@@ -96,7 +105,7 @@ def main():
             product_data = fetch_amazon_data(url, headers)
             if product_data['title'] and product_data['price'] is not None:
                 store_data_in_db(product_data)
-                print(f"Fetched data for {product_data['title']}: {product_data['price']}")
+                print(f"Fetched data for {product_data['nickname']} ({product_data['title']}): {product_data['price']}")
             else:
                 print(f"Could not get valid data for URL: {url}")
         except Exception as e:
@@ -104,7 +113,7 @@ def main():
 
     history = fetch_price_history()
     if history:
-        df = pd.DataFrame(history, columns=["title", "price", "date"])
+        df = pd.DataFrame(history, columns=["nickname", "title", "price", "date"])
 
         # Convert date column to a datetime object
         df['date'] = pd.to_datetime(df['date'])
@@ -118,12 +127,12 @@ def main():
         try:
             existing_df = pd.read_csv(csv_file)
             combined_df = pd.concat([existing_df, df], ignore_index=True)
-            combined_df.drop_duplicates(subset=["title", "price", "date_only", "time_only"], inplace=True)
+            combined_df.drop_duplicates(subset=["nickname", "price", "date_only", "time_only"], inplace=True)
         except FileNotFoundError:
             combined_df = df
 
         # Save only the required columns to the CSV
-        combined_df = combined_df[["title", "price", "date_only", "time_only"]]
+        combined_df = combined_df[["nickname", "title", "price", "date_only", "time_only"]]
         combined_df.to_csv('price_history.csv', index=False)
         print("Price history has been updated and saved to price_history.csv")
     else:
