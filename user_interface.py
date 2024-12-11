@@ -1,8 +1,10 @@
 import tkinter as tk
 from tkinter import messagebox
 import json
+import threading
+import time
+import schedule
 import subprocess
-import os
 
 # File to store the product URLs and nicknames
 URLS_FILE = "product_urls.json"
@@ -21,31 +23,54 @@ def save_product_urls(urls):
     with open(URLS_FILE, 'w') as file:
         json.dump(urls, file, indent=4)
 
-# Variables to manage the scheduler process
-scheduler_process = None
+# Scheduler management
+scheduler_running = False
+scheduler_thread = None
 
-def toggle_scheduler():
-    """
-    Starts or stops the scheduler.py script when the button is clicked.
-    """
-    global scheduler_process
-    if scheduler_process is None:
-        try:
-            scheduler_process = subprocess.Popen(["python", "scheduler.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            scheduler_button.config(text="Stop Scheduler")
-            messagebox.showinfo("Scheduler", "Scheduler started successfully.")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to start scheduler: {e}")
+def start_scheduler():
+    """Starts the scheduler to fetch data at regular intervals."""
+    def run_schedule():
+        while scheduler_running:
+            schedule.run_pending()
+            time.sleep(1)
+
+    global scheduler_running, scheduler_thread
+
+    if not scheduler_running:
+        scheduler_running = True
+        schedule.every(1).minutes.do(run_price_script)
+        scheduler_thread = threading.Thread(target=run_schedule, daemon=True)
+        scheduler_thread.start()
+        print("Scheduler started.")
     else:
-        try:
-            scheduler_process.terminate()
-            scheduler_process = None
-            scheduler_button.config(text="Start Scheduler")
-            messagebox.showinfo("Scheduler", "Scheduler stopped successfully.")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to stop scheduler: {e}")
+        print("Scheduler is already running.")
 
-# GUI functions for managing products
+def stop_scheduler():
+    """Stops the scheduler."""
+    global scheduler_running
+    if scheduler_running:
+        scheduler_running = False
+        print("Scheduler stopped.")
+
+def toggle_scheduler(button):
+    """Toggles the scheduler on and off, updating the button."""
+    if scheduler_running:
+        stop_scheduler()
+        button.config(text="Start Scheduler", bg="green")
+    else:
+        start_scheduler()
+        button.config(text="Stop Scheduler", bg="red")
+
+def run_price_script():
+    """Run the generate_data.py script."""
+    try:
+        print(f"Running generate_data.py at {time.strftime('%Y-%m-%d %H:%M:%S')}...")
+        subprocess.run(["python", "generate_data.py"], check=True)
+        print("Script executed successfully.\n")
+    except Exception as e:
+        print(f"Error running script: {e}\n")
+
+# GUI for managing products
 def add_product():
     nickname = nickname_entry.get().strip()
     url = url_entry.get().strip()
@@ -86,42 +111,51 @@ def refresh_product_list():
 
 # GUI Setup
 def show_gui():
-    global nickname_entry, url_entry, product_listbox, scheduler_button
-
     app = tk.Tk()
     app.title("Product Manager")
     app.geometry("400x500")
 
+    # Frame for Adding Products
     add_frame = tk.Frame(app)
     add_frame.pack(pady=10)
 
     tk.Label(add_frame, text="Nickname:").grid(row=0, column=0, padx=5, pady=5)
+    global nickname_entry
     nickname_entry = tk.Entry(add_frame)
     nickname_entry.grid(row=0, column=1, padx=5, pady=5)
 
     tk.Label(add_frame, text="URL:").grid(row=1, column=0, padx=5, pady=5)
+    global url_entry
     url_entry = tk.Entry(add_frame, width=30)
     url_entry.grid(row=1, column=1, padx=5, pady=5)
 
     add_button = tk.Button(add_frame, text="Add Product", command=add_product)
     add_button.grid(row=2, column=0, columnspan=2, pady=10)
 
+    # Frame for Managing Products
     manage_frame = tk.Frame(app)
     manage_frame.pack(pady=10)
 
     tk.Label(manage_frame, text="Products:").pack()
 
+    global product_listbox
     product_listbox = tk.Listbox(manage_frame, width=50, height=10)
     product_listbox.pack(pady=5)
 
     delete_button = tk.Button(manage_frame, text="Delete Selected Product", command=delete_product)
     delete_button.pack(pady=5)
 
-    # Scheduler Control
-    scheduler_button = tk.Button(app, text="Start Scheduler", command=toggle_scheduler, bg="green", fg="white")
+    refresh_product_list()
+
+    # Scheduler Button
+    scheduler_button = tk.Button(
+        app,
+        text="Start Scheduler",
+        bg="green",
+        command=lambda: toggle_scheduler(scheduler_button)
+    )
     scheduler_button.pack(pady=20)
 
-    refresh_product_list()
     app.mainloop()
 
 if __name__ == "__main__":
