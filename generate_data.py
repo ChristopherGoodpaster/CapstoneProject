@@ -4,13 +4,9 @@ import sqlite3
 from datetime import datetime
 import pandas as pd
 import json
-import tkinter as tk
-from tkinter import messagebox
 
-# File to store the product URLs and nicknames
 URLS_FILE = "product_urls.json"
 
-# Load and save functions for product URLs
 def load_product_urls():
     """Loads product URLs and nicknames from a JSON file."""
     try:
@@ -19,12 +15,6 @@ def load_product_urls():
     except FileNotFoundError:
         return {}
 
-def save_product_urls(urls):
-    """Saves product URLs and nicknames to a JSON file."""
-    with open(URLS_FILE, 'w') as file:
-        json.dump(urls, file, indent=4)
-
-# Amazon data fetching and database handling
 def fetch_amazon_data(url, headers):
     """
     Fetches product data from an Amazon product page.
@@ -45,9 +35,14 @@ def fetch_amazon_data(url, headers):
             try:
                 price = float(price_str)
             except ValueError:
-                price = None
+                price = None  # If price conversion fails, set to None
         else:
-            price = None
+            price = None  # If price element is not found
+
+        # Handle missing price
+        if price is None:
+            print(f"Warning: Could not fetch a valid price for {title}. Skipping...")
+            return None
 
         return {
             'title': title,
@@ -62,7 +57,7 @@ def initialize_database(db_name='amazon_tracker.db'):
     """Initializes the SQLite database."""
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
-    cursor.execute('DROP TABLE IF EXISTS products')  # Drop existing table
+    cursor.execute('DROP TABLE IF EXISTS products')
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,7 +91,6 @@ def fetch_price_history(db_name='amazon_tracker.db'):
     conn.close()
     return rows
 
-# Main logic for fetching data
 def main():
     product_urls = load_product_urls()
     headers = {
@@ -138,91 +132,5 @@ def main():
     else:
         print("No data found in database.")
 
-# GUI for managing products
-def add_product():
-    nickname = nickname_entry.get().strip()
-    url = url_entry.get().strip()
-
-    if not nickname or not url:
-        messagebox.showerror("Error", "Nickname and URL cannot be empty!")
-        return
-
-    product_urls = load_product_urls()
-    if nickname in product_urls:
-        messagebox.showerror("Error", f"Nickname '{nickname}' already exists.")
-    else:
-        product_urls[nickname] = url
-        save_product_urls(product_urls)
-        messagebox.showinfo("Success", f"Added product: {nickname}")
-        refresh_product_list()
-
-def delete_product():
-    selected_product = product_listbox.get(tk.ACTIVE)
-    if not selected_product:
-        messagebox.showerror("Error", "No product selected!")
-        return
-
-    product_urls = load_product_urls()
-    if selected_product in product_urls:
-        del product_urls[selected_product]
-        save_product_urls(product_urls)
-        messagebox.showinfo("Success", f"Deleted product: {selected_product}")
-        refresh_product_list()
-    else:
-        messagebox.showerror("Error", f"Product '{selected_product}' not found.")
-
-def refresh_product_list():
-    product_listbox.delete(0, tk.END)
-    product_urls = load_product_urls()
-    for nickname in product_urls.keys():
-        product_listbox.insert(tk.END, nickname)
-
-# GUI Setup
-def show_gui():
-    app = tk.Tk()
-    app.title("Product Manager")
-    app.geometry("400x400")
-
-    add_frame = tk.Frame(app)
-    add_frame.pack(pady=10)
-
-    tk.Label(add_frame, text="Nickname:").grid(row=0, column=0, padx=5, pady=5)
-    global nickname_entry
-    nickname_entry = tk.Entry(add_frame)
-    nickname_entry.grid(row=0, column=1, padx=5, pady=5)
-
-    tk.Label(add_frame, text="URL:").grid(row=1, column=0, padx=5, pady=5)
-    global url_entry
-    url_entry = tk.Entry(add_frame, width=30)
-    url_entry.grid(row=1, column=1, padx=5, pady=5)
-
-    add_button = tk.Button(add_frame, text="Add Product", command=add_product)
-    add_button.grid(row=2, column=0, columnspan=2, pady=10)
-
-    manage_frame = tk.Frame(app)
-    manage_frame.pack(pady=10)
-
-    tk.Label(manage_frame, text="Products:").pack()
-
-    global product_listbox
-    product_listbox = tk.Listbox(manage_frame, width=50, height=10)
-    product_listbox.pack(pady=5)
-
-    delete_button = tk.Button(manage_frame, text="Delete Selected Product", command=delete_product)
-    delete_button.pack(pady=5)
-
-    refresh_product_list()
-    app.mainloop()
-
 if __name__ == "__main__":
-    print("Options:")
-    print("1. Fetch and update product data")
-    print("2. Open Product Manager GUI")
-    choice = input("Enter your choice (1/2): ").strip()
-
-    if choice == "1":
-        main()
-    elif choice == "2":
-        show_gui()
-    else:
-        print("Invalid choice. Exiting.")
+    main()

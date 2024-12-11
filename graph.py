@@ -7,34 +7,45 @@ from tkinter import Tk, Listbox, Button, Label, MULTIPLE, messagebox
 def load_data(csv_file):
     """Loads historical price data from the CSV and removes rows with NaN nicknames."""
     try:
+        # Load CSV
         df = pd.read_csv(csv_file)
         df['date_only'] = pd.to_datetime(df['date_only'])
 
-        # Check for NaN in the nickname column
+        # Remove rows with NaN in the nickname column
         if df['nickname'].isna().any():
             print("Found rows with NaN in the 'nickname' column. Removing them...")
             df = df.dropna(subset=['nickname'])
-
-            # Save the cleaned data back to the CSV
-            df.to_csv(csv_file, index=False)
+            df.to_csv(csv_file, index=False)  # Save cleaned data back to the CSV
             print("Cleaned dataset saved back to the CSV.")
 
         return df
     except FileNotFoundError:
         messagebox.showerror("Error", f"File '{csv_file}' not found!")
         exit()
+    except Exception as e:
+        print(f"Error loading data: {e}")
+        messagebox.showerror("Error", "Failed to load data.")
+        exit()
 
 def generate_graphs(selected_products, df):
     """Generates graphs for the selected products."""
-    # Filter the DataFrame based on selected products
-    filtered_df = df[df['nickname'].isin(selected_products)]
+    if selected_products:
+        # Filter the DataFrame based on selected products
+        filtered_df = df[df['nickname'].isin(selected_products)]
+    else:
+        print("No products selected. Using all data.")
+        filtered_df = df
+
+    if filtered_df.empty:
+        print("No data available for the selected products.")
+        return
 
     # Create a figure with a 2x2 grid layout
-    fig, axes = plt.subplots(2, 2, figsize=(16, 16))  # 2 rows, 2 columns
+    fig, axes = plt.subplots(2, 2, figsize=(16, 16))
 
     # Visualization 1: Line Plot for Price Trends Over Time
     axes[0, 0].set_title("Price Trends Over Time", fontsize=16)
-    for product in selected_products:
+    for product in filtered_df['nickname'].unique():
         product_data = filtered_df[filtered_df['nickname'] == product].sort_values(by='date_only')
         axes[0, 0].plot(product_data['date_only'], product_data['price'], marker='o', linestyle='-', label=product)
 
@@ -80,12 +91,8 @@ def product_selection_gui(df):
     """GUI to select products for graph generation."""
     def generate_graphs_callback():
         selected_indices = listbox.curselection()
-        if not selected_indices:
-            messagebox.showerror("Error", "No products selected!")
-            return
-
         selected_products = [listbox.get(i) for i in selected_indices]
-        root.destroy()  # Close the GUI
+        root.destroy()
         generate_graphs(selected_products, df)
 
     root = Tk()
@@ -96,7 +103,7 @@ def product_selection_gui(df):
 
     listbox = Listbox(root, selectmode=MULTIPLE, font=("Arial", 12), width=50, height=15)
     for product in df['nickname'].unique():
-        listbox.insert('end', product)  # Use 'end' instead of 'tk.END'
+        listbox.insert('end', product)
     listbox.pack(pady=10)
 
     Button(root, text="Generate Graphs", command=generate_graphs_callback, font=("Arial", 12)).pack(pady=10)
