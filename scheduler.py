@@ -11,7 +11,7 @@ def run_price_script():
     except Exception as e:
         print(f"Error running script: {e}\n")
 
-# Schedule the job to run every 1 minute
+# Schedule the job to run every 1 minute, change here to set it to run longer thatn 1 minute, be aware if you run this too many times Amazon will ban you from accessing their website
 schedule.every(1).minutes.do(run_price_script)
 
 # Keep the script running indefinitely
