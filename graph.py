@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.dates as mdates
 from tkinter import Tk, Listbox, Button, Label, MULTIPLE, messagebox
+import mplcursors
 
 def load_data(csv_file):
     """Loads historical price data from the CSV and removes rows with NaN nicknames."""
@@ -47,7 +48,20 @@ def generate_graphs(selected_products, df):
     axes[0, 0].set_title("Price Trends Over Time", fontsize=16)
     for product in filtered_df['nickname'].unique():
         product_data = filtered_df[filtered_df['nickname'] == product].sort_values(by='date_only')
-        axes[0, 0].plot(product_data['date_only'], product_data['price'], marker='o', linestyle='-', label=product)
+        line, = axes[0, 0].plot(
+            product_data['date_only'], 
+            product_data['price'], 
+            marker='o', 
+            linestyle='-', 
+            label=product
+        )
+
+        # Add hover functionality
+        cursor = mplcursors.cursor(line, hover=True)
+        cursor.connect("add", lambda sel: sel.annotation.set_text(
+            f"{product}\nDate: {pd.to_datetime(sel.target[0]).strftime('%Y-%m-%d')}\nPrice: ${sel.target[1]:.2f}"
+        ))
+        cursor.connect("remove", lambda sel: sel.annotation.set_visible(False))
 
     axes[0, 0].set_xlabel("Date", fontsize=12)
     axes[0, 0].set_ylabel("Price ($)", fontsize=12)
@@ -58,26 +72,48 @@ def generate_graphs(selected_products, df):
 
     # Visualization 2: Bar Chart of Average Prices
     avg_price = filtered_df.groupby('nickname')['price'].mean().reset_index()
-    sns.barplot(data=avg_price, x='nickname', y='price', palette='viridis', ax=axes[0, 1])
+    bar = sns.barplot(data=avg_price, x='nickname', y='price', hue='nickname', dodge=False, palette='viridis', ax=axes[0, 1])
     axes[0, 1].set_title("Average Price per Product", fontsize=16)
     axes[0, 1].set_xlabel("Product", fontsize=12)
     axes[0, 1].set_ylabel("Average Price ($)", fontsize=12)
     axes[0, 1].tick_params(axis='x', rotation=45)
 
+    # Add hover functionality
+    cursor = mplcursors.cursor(bar.patches, hover=True)
+    cursor.connect("add", lambda sel: sel.annotation.set_text(
+        f"Product: {avg_price.iloc[int(sel.index)].nickname}\nAverage Price: ${avg_price.iloc[int(sel.index)].price:.2f}"
+    ))
+    cursor.connect("remove", lambda sel: sel.annotation.set_visible(False))
+
     # Visualization 3: Boxplot of Price Distribution
-    sns.boxplot(data=filtered_df, x='nickname', y='price', palette='Set2', ax=axes[1, 0])
+    box = sns.boxplot(data=filtered_df, x='nickname', y='price', hue='nickname', dodge=False, palette='Set2', ax=axes[1, 0])
     axes[1, 0].set_title("Price Distribution per Product", fontsize=16)
     axes[1, 0].set_xlabel("Product", fontsize=12)
     axes[1, 0].set_ylabel("Price ($)", fontsize=12)
     axes[1, 0].tick_params(axis='x', rotation=45)
 
-    # Visualization 4: Pivot Table with Price Trends
-    pivot_table = pd.pivot_table(filtered_df, values='price', index='date_only', columns='nickname', aggfunc='mean')
-    for column in pivot_table.columns:
-        axes[1, 1].plot(pivot_table.index, pivot_table[column], marker='o', label=column)
+    # Add hover functionality
+    cursor = mplcursors.cursor(box.get_lines(), hover=True)
+    cursor.connect("add", lambda sel: sel.annotation.set_text(
+        f"Product: {filtered_df.iloc[int(sel.index)].nickname}\nPrice: ${filtered_df.iloc[int(sel.index)].price:.2f}"
+    ))
+    cursor.connect("remove", lambda sel: sel.annotation.set_visible(False))
 
-    axes[1, 1].set_title("Pivot Table: Price Trends Over Time", fontsize=16)
-    axes[1, 1].set_xlabel("Date", fontsize=12)
+    # Visualization 4: Pivot Table with Price Trends (Last 24 Hours)
+    last_24_hours = filtered_df[filtered_df['date_only'] > (filtered_df['date_only'].max() - pd.Timedelta(hours=24))]
+    pivot_table = pd.pivot_table(last_24_hours, values='price', index='date_only', columns='nickname', aggfunc='mean')
+    for column in pivot_table.columns:
+        line, = axes[1, 1].plot(pivot_table.index, pivot_table[column], marker='o', label=column)
+
+        # Add hover functionality
+        cursor = mplcursors.cursor(line, hover=True)
+        cursor.connect("add", lambda sel: sel.annotation.set_text(
+            f"Product: {column}\nDate: {pd.to_datetime(sel.target[0]).strftime('%Y-%m-%d %H:%M:%S')}\nPrice: ${sel.target[1]:.2f}"
+        ))
+        cursor.connect("remove", lambda sel: sel.annotation.set_visible(False))
+
+    axes[1, 1].set_title("Pivot Table: Price Trends (Last 24 Hours)", fontsize=16)
+    axes[1, 1].set_xlabel("Time", fontsize=12)
     axes[1, 1].set_ylabel("Average Price ($)", fontsize=12)
     axes[1, 1].tick_params(axis='x', rotation=45)
     axes[1, 1].grid(True, linestyle='--', alpha=0.7)
