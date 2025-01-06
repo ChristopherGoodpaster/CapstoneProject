@@ -3,19 +3,27 @@ import schedule
 import subprocess
 
 def run_price_script():
-    """Run the generate_data.py script."""
+    """Run generate_data.py using its absolute path."""
     try:
+        # Print the current time so you know when it ran
         print(f"Running generate_data.py at {time.strftime('%Y-%m-%d %H:%M:%S')}...")
-        subprocess.run(["python", "generate_data.py"], check=True)
+        
+        # Update this path to point exactly to your generate_data.py
+        subprocess.run([
+            "python",
+            r"C:\Users\Chris\Documents\code_u\Capstone\CapstoneProject\CapstoneProject\generate_data.py"
+        ], check=True)
+        
         print("Script executed successfully.\n")
     except Exception as e:
         print(f"Error running script: {e}\n")
 
-# Schedule the job to run every 1 minute, change here to set it to run longer thatn 1 minute, be aware if you run this too many times Amazon will ban you from accessing their website
+# Schedule it to run every 1 minute
 schedule.every(1).minutes.do(run_price_script)
 
-# Keep the script running indefinitely
 print("Scheduler is running. Press Ctrl+C to stop.")
+
+# Keep the scheduler running indefinitely
 while True:
     schedule.run_pending()
-    time.sleep(60)  # Check every minute
+    time.sleep(60)

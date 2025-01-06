@@ -5,6 +5,7 @@ import threading
 import time
 import schedule
 import subprocess
+import os  # <-- We import os so we can build an absolute path
 
 # File to store the product URLs and nicknames
 URLS_FILE = "product_urls.json"
@@ -27,6 +28,19 @@ def save_product_urls(urls):
 scheduler_running = False
 scheduler_thread = None
 
+def run_price_script():
+    """Run the generate_data.py script with an absolute path."""
+    try:
+        # Build an absolute path to generate_data.py in the same folder as user_interface.py
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        generate_data_path = os.path.join(script_dir, "generate_data.py")
+
+        print(f"Running generate_data.py at {time.strftime('%Y-%m-%d %H:%M:%S')}...")
+        subprocess.run(["python", generate_data_path], check=True)
+        print("Script executed successfully.\n")
+    except Exception as e:
+        print(f"Error running script: {e}\n")
+
 def start_scheduler():
     """Starts the scheduler to fetch data at regular intervals."""
     def run_schedule():
@@ -38,6 +52,7 @@ def start_scheduler():
 
     if not scheduler_running:
         scheduler_running = True
+        # Run every 1 minute
         schedule.every(1).minutes.do(run_price_script)
         scheduler_thread = threading.Thread(target=run_schedule, daemon=True)
         scheduler_thread.start()
@@ -60,15 +75,6 @@ def toggle_scheduler(button):
     else:
         start_scheduler()
         button.config(text="Stop Scheduler", bg="red")
-
-def run_price_script():
-    """Run the generate_data.py script."""
-    try:
-        print(f"Running generate_data.py at {time.strftime('%Y-%m-%d %H:%M:%S')}...")
-        subprocess.run(["python", "generate_data.py"], check=True)
-        print("Script executed successfully.\n")
-    except Exception as e:
-        print(f"Error running script: {e}\n")
 
 # GUI for managing products
 def add_product():
@@ -160,6 +166,3 @@ def show_gui():
 
 if __name__ == "__main__":
     show_gui()
-
-
-#update

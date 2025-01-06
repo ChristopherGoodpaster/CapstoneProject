@@ -1,9 +1,6 @@
-#install each
-
 pandas
 matplotlib
 seaborn
 mplcursors
-tkinter
 requests
 beautifulsoup4
