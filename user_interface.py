@@ -5,12 +5,15 @@ import threading
 import time
 import schedule
 import subprocess
-import os  # <-- We import os so we can build an absolute path
+import os
 
-# File to store the product URLs and nicknames
 URLS_FILE = "product_urls.json"
 
-# Load and save functions for product URLs
+# Global variables for scheduler state and interval
+scheduler_running = False
+scheduler_thread = None
+interval_var = 1  # Default interval in hours (can be 1, 6, 12, etc.)
+
 def load_product_urls():
     """Loads product URLs and nicknames from a JSON file."""
     try:
@@ -24,14 +27,9 @@ def save_product_urls(urls):
     with open(URLS_FILE, 'w') as file:
         json.dump(urls, file, indent=4)
 
-# Scheduler management
-scheduler_running = False
-scheduler_thread = None
-
 def run_price_script():
     """Run the generate_data.py script with an absolute path."""
     try:
-        # Build an absolute path to generate_data.py in the same folder as user_interface.py
         script_dir = os.path.dirname(os.path.abspath(__file__))
         generate_data_path = os.path.join(script_dir, "generate_data.py")
 
@@ -41,8 +39,20 @@ def run_price_script():
     except Exception as e:
         print(f"Error running script: {e}\n")
 
+def set_interval(hours, current_frequency_label):
+    """
+    Sets the global interval_var to 'hours'.
+    Also updates the label showing the current frequency.
+    """
+    global interval_var
+    interval_var = hours
+    current_frequency_label.config(
+        text=f"Current Frequency: Every {interval_var} Hour(s)"
+    )
+    print(f"Scheduler frequency set to {hours} hour(s).")
+
 def start_scheduler():
-    """Starts the scheduler to fetch data at regular intervals."""
+    """Starts the scheduler to fetch data at the chosen interval."""
     def run_schedule():
         while scheduler_running:
             schedule.run_pending()
@@ -52,11 +62,16 @@ def start_scheduler():
 
     if not scheduler_running:
         scheduler_running = True
-        # Run every 1 minute
-        schedule.every(1).minutes.do(run_price_script)
+        # Clear any old jobs to avoid duplicates
+        schedule.clear()
+
+        # Schedule based on the chosen interval (in hours)
+        schedule.every(interval_var).hours.do(run_price_script)
+
+        # Start the background thread
         scheduler_thread = threading.Thread(target=run_schedule, daemon=True)
         scheduler_thread.start()
-        print("Scheduler started.")
+        print(f"Scheduler started. Interval: {interval_var} hour(s).")
     else:
         print("Scheduler is already running.")
 
@@ -65,10 +80,11 @@ def stop_scheduler():
     global scheduler_running
     if scheduler_running:
         scheduler_running = False
+        schedule.clear()
         print("Scheduler stopped.")
 
 def toggle_scheduler(button):
-    """Toggles the scheduler on and off, updating the button."""
+    """Toggles the scheduler on and off, updating the button text and color."""
     if scheduler_running:
         stop_scheduler()
         button.config(text="Start Scheduler", bg="green")
@@ -76,7 +92,6 @@ def toggle_scheduler(button):
         start_scheduler()
         button.config(text="Stop Scheduler", bg="red")
 
-# GUI for managing products
 def add_product():
     nickname = nickname_entry.get().strip()
     url = url_entry.get().strip()
@@ -115,11 +130,10 @@ def refresh_product_list():
     for nickname in product_urls.keys():
         product_listbox.insert(tk.END, nickname)
 
-# GUI Setup
 def show_gui():
     app = tk.Tk()
     app.title("Product Manager")
-    app.geometry("400x500")
+    app.geometry("400x580")
 
     # Frame for Adding Products
     add_frame = tk.Frame(app)
@@ -153,12 +167,45 @@ def show_gui():
 
     refresh_product_list()
 
+    # Frame for Scheduler Frequency
+    freq_frame = tk.Frame(app, bd=2, relief="ridge")
+    freq_frame.pack(pady=10, fill="x", padx=20)
+
+    tk.Label(freq_frame, text="Select Scheduler Frequency (Hours):", font=("Arial", 12)).pack(pady=5)
+
+    # Label to show the current frequency chosen
+    current_frequency_label = tk.Label(freq_frame, text="Current Frequency: Every 1 Hour(s)", font=("Arial", 10))
+    current_frequency_label.pack(pady=5)
+
+    btn_1h = tk.Button(
+        freq_frame,
+        text="Every 1 Hour",
+        command=lambda: set_interval(1, current_frequency_label)
+    )
+    btn_1h.pack(side="left", expand=True, fill="both", padx=5, pady=5)
+
+    btn_6h = tk.Button(
+        freq_frame,
+        text="Every 6 Hours",
+        command=lambda: set_interval(6, current_frequency_label)
+    )
+    btn_6h.pack(side="left", expand=True, fill="both", padx=5, pady=5)
+
+    btn_12h = tk.Button(
+        freq_frame,
+        text="Every 12 Hours",
+        command=lambda: set_interval(12, current_frequency_label)
+    )
+    btn_12h.pack(side="left", expand=True, fill="both", padx=5, pady=5)
+
     # Scheduler Button
     scheduler_button = tk.Button(
         app,
         text="Start Scheduler",
         bg="green",
-        command=lambda: toggle_scheduler(scheduler_button)
+        command=lambda: toggle_scheduler(scheduler_button),
+        font=("Arial", 12),
+        width=20
     )
     scheduler_button.pack(pady=20)
 

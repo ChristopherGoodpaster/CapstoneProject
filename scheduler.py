@@ -18,8 +18,8 @@ def run_price_script():
     except Exception as e:
         print(f"Error running script: {e}\n")
 
-# Schedule it to run every 1 minute
-schedule.every(1).minutes.do(run_price_script)
+# Schedule it to run every 12 hours
+schedule.every(720).minutes.do(run_price_script)
 
 print("Scheduler is running. Press Ctrl+C to stop.")
 
