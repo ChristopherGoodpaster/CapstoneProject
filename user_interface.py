@@ -9,16 +9,13 @@ import os
 
 URLS_FILE = "product_urls.json"
 
-# Globals for scheduling
 scheduler_running = False
 scheduler_thread = None
 
-# We'll store the user-chosen interval in two parts:
+# We'll store scheduling info:
 interval_value = 1       # numeric value
-interval_unit = "hours"  # "minutes" or "hours"
-
-# For auto-clean logic
-auto_clean_var = None
+interval_unit = "hours"  # can be "minutes", "hours", or "daily_8_20"
+daily_times = ["08:00", "20:00"]  # 8:00AM & 8:00PM daily (local time)
 
 def load_product_urls():
     try:
@@ -33,52 +30,48 @@ def save_product_urls(urls):
 
 def run_price_script():
     """
-    Run generate_data.py, then optionally run clean_data.py 
-    if 'auto_clean_var' (checkbox) is checked.
+    Run generate_data.py, then automatically run clean_data.py.
     """
     try:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         generate_data_path = os.path.join(script_dir, "generate_data.py")
         clean_data_path = os.path.join(script_dir, "clean_data.py")
 
+        # 1) Run generate_data.py
         print(f"Running generate_data.py at {time.strftime('%Y-%m-%d %H:%M:%S')}...")
         subprocess.run(["python", generate_data_path], check=True)
         print("Script executed successfully.\n")
 
-        # If user checked the auto-clean box, run clean_data.py
-        if auto_clean_var.get():
-            print("Now running clean_data.py...")
-            subprocess.run(["python", clean_data_path], check=True)
-            print("Clean data script executed successfully.\n")
+        # 2) Now run clean_data.py
+        print("Now running clean_data.py...")
+        subprocess.run(["python", clean_data_path], check=True)
+        print("Clean data script executed successfully.\n")
 
     except Exception as e:
         print(f"Error running script: {e}\n")
 
 def set_interval(value, unit, current_frequency_label):
     """
-    Sets the scheduling interval (value + unit).
-    Updates the label so the user knows which frequency is selected.
+    Updates the global interval_value and interval_unit.
+    Also updates the label so user knows which scheduling mode is selected.
     """
     global interval_value, interval_unit
     interval_value = value
     interval_unit = unit
 
     if unit == "minutes":
-        current_frequency_label.config(
-            text=f"Current Frequency: Every {value} Minute(s)"
-        )
-        print(f"Scheduler frequency set to {value} minute(s).")
+        current_frequency_label.config(text=f"Current Frequency: Every {value} Minute(s)")
+    elif unit == "hours":
+        current_frequency_label.config(text=f"Current Frequency: Every {value} Hour(s)")
+    elif unit == "daily_8_20":
+        current_frequency_label.config(text="Current Frequency: 8:00AM & 8:00PM Daily")
     else:
-        current_frequency_label.config(
-            text=f"Current Frequency: Every {value} Hour(s)"
-        )
-        print(f"Scheduler frequency set to {value} hour(s).")
+        current_frequency_label.config(text="Unknown frequency mode.")
+
+    print(f"Scheduler set to: {current_frequency_label.cget('text')}")
 
 def start_scheduler():
-    """
-    Starts the scheduler to fetch data at the chosen interval 
-    (either minutes or hours).
-    """
+    """Starts the scheduler to fetch data at the chosen interval, then runs script immediately."""
     def run_schedule():
         while scheduler_running:
             schedule.run_pending()
@@ -88,19 +81,36 @@ def start_scheduler():
 
     if not scheduler_running:
         scheduler_running = True
-        schedule.clear()  # Clear old jobs to avoid duplicates
+        schedule.clear()  # Clear any old jobs to avoid duplicates
 
-        # Schedule based on user-chosen interval
+        # Configure schedule based on interval_unit
         if interval_unit == "minutes":
             schedule.every(interval_value).minutes.do(run_price_script)
-            print(f"Scheduler started. Interval: {interval_value} minute(s).")
-        else:
-            schedule.every(interval_value).hours.do(run_price_script)
-            print(f"Scheduler started. Interval: {interval_value} hour(s).")
+            print(f"Scheduler started (every {interval_value} minute(s)).")
 
+        elif interval_unit == "hours":
+            schedule.every(interval_value).hours.do(run_price_script)
+            print(f"Scheduler started (every {interval_value} hour(s)).")
+
+        elif interval_unit == "daily_8_20":
+            # Schedule run_price_script at 8:00AM and 8:00PM daily
+            for t in daily_times:
+                schedule.every().day.at(t).do(run_price_script)
+            print(f"Scheduler started (daily at {', '.join(daily_times)}).")
+
+        else:
+            print("No valid interval mode selected. Scheduler not started.")
+            scheduler_running = False
+            return
+
+        # Start the background thread for schedule
         scheduler_thread = threading.Thread(target=run_schedule, daemon=True)
         scheduler_thread.start()
 
+        # ---- RUN IMMEDIATELY ONCE ----
+        # This triggers the scraping and cleaning right away
+        print("Running script immediately after scheduler start...")
+        run_price_script()
     else:
         print("Scheduler is already running.")
 
@@ -111,13 +121,19 @@ def stop_scheduler():
         schedule.clear()
         print("Scheduler stopped.")
 
-def toggle_scheduler(button):
+def toggle_scheduler(button, timestamp_label):
+    """Toggles the scheduler on/off, updates the button text & color, 
+       and sets a timestamp when turned on."""
     if scheduler_running:
         stop_scheduler()
         button.config(text="Start Scheduler", bg="green")
+        timestamp_label.config(text="Scheduler is OFF.")
     else:
         start_scheduler()
         button.config(text="Stop Scheduler", bg="red")
+        # Update the timestamp label with the current time
+        turned_on_time = time.strftime('%Y-%m-%d %H:%M:%S')
+        timestamp_label.config(text=f"Scheduler turned ON at {turned_on_time}")
 
 def add_product():
     nickname = nickname_entry.get().strip()
@@ -160,7 +176,7 @@ def refresh_product_list():
 def show_gui():
     app = tk.Tk()
     app.title("Product Manager")
-    app.geometry("400x680")
+    app.geometry("480x620")
 
     # Frame for Adding Products
     add_frame = tk.Frame(app)
@@ -200,50 +216,46 @@ def show_gui():
 
     tk.Label(freq_frame, text="Select Scheduler Frequency:", font=("Arial", 12)).pack(pady=5)
 
-    # Label for showing the current frequency
     current_frequency_label = tk.Label(freq_frame, text="Current Frequency: Every 1 Hour(s)", font=("Arial", 10))
     current_frequency_label.pack(pady=5)
 
-    # Button: 1 Minute
+    # Buttons for 1 Minute, 1 Hour, 6 Hours, 12 Hours
     btn_1m = tk.Button(freq_frame, text="Every 1 Minute",
                        command=lambda: set_interval(1, "minutes", current_frequency_label))
-    btn_1m.pack(side="left", expand=True, fill="both", padx=5, pady=5)
+    btn_1m.pack(side="left", expand=True, fill="both", padx=2, pady=2)
 
-    # Button: 1 Hour
     btn_1h = tk.Button(freq_frame, text="Every 1 Hour",
                        command=lambda: set_interval(1, "hours", current_frequency_label))
-    btn_1h.pack(side="left", expand=True, fill="both", padx=5, pady=5)
+    btn_1h.pack(side="left", expand=True, fill="both", padx=2, pady=2)
 
-    # Button: 6 Hours
     btn_6h = tk.Button(freq_frame, text="Every 6 Hours",
                        command=lambda: set_interval(6, "hours", current_frequency_label))
-    btn_6h.pack(side="left", expand=True, fill="both", padx=5, pady=5)
+    btn_6h.pack(side="left", expand=True, fill="both", padx=2, pady=2)
 
-    # Button: 12 Hours
     btn_12h = tk.Button(freq_frame, text="Every 12 Hours",
                         command=lambda: set_interval(12, "hours", current_frequency_label))
-    btn_12h.pack(side="left", expand=True, fill="both", padx=5, pady=5)
+    btn_12h.pack(side="left", expand=True, fill="both", padx=2, pady=2)
 
-    # Checkbox to auto-run clean_data.py
-    global auto_clean_var
-    auto_clean_var = tk.BooleanVar(value=False)
-    auto_clean_check = tk.Checkbutton(
-        app,
-        text="Auto-run clean_data.py after scraping",
-        variable=auto_clean_var
-    )
-    auto_clean_check.pack(pady=10)
+    # "8:00AM & 8:00PM" Button
+    btn_8am_8pm = tk.Button(freq_frame, text="8:00 AM & 8:00 PM",
+                            command=lambda: set_interval(None, "daily_8_20", current_frequency_label))
+    btn_8am_8pm.pack(side="left", expand=True, fill="both", padx=2, pady=2)
 
-    # Scheduler Start/Stop Button
+    # Scheduler ON/OFF Button & Timestamp Label
     scheduler_button = tk.Button(
         app,
         text="Start Scheduler",
         bg="green",
-        command=lambda: toggle_scheduler(scheduler_button),
         font=("Arial", 12),
         width=20
     )
-    scheduler_button.pack(pady=20)
+    scheduler_button.pack(pady=10)
+
+    timestamp_label = tk.Label(app, text="Scheduler is OFF.", font=("Arial", 10), fg="blue")
+    timestamp_label.pack(pady=5)
+
+    # Link the toggle_scheduler function to the button
+    scheduler_button.config(command=lambda: toggle_scheduler(scheduler_button, timestamp_label))
 
     app.mainloop()
 
