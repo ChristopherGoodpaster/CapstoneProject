@@ -228,6 +228,10 @@ def show_gui():
                        command=lambda: set_interval(1, "hours", current_frequency_label))
     btn_1h.pack(side="left", expand=True, fill="both", padx=2, pady=2)
 
+    btn_3h = tk.Button(freq_frame, text="Every 3 Hours",
+                       command=lambda: set_interval(3, "hours", current_frequency_label))
+    btn_3h.pack(side="left", expand=True, fill="both", padx=2, pady=2)
+ 
     btn_6h = tk.Button(freq_frame, text="Every 6 Hours",
                        command=lambda: set_interval(6, "hours", current_frequency_label))
     btn_6h.pack(side="left", expand=True, fill="both", padx=2, pady=2)
