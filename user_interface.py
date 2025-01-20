@@ -6,17 +6,25 @@ import time
 import schedule
 import subprocess
 import os
+import pandas as pd
 
+###############################################################################
+# GLOBALS
+###############################################################################
 URLS_FILE = "product_urls.json"
-
 scheduler_running = False
 scheduler_thread = None
 
-# We'll store scheduling info:
 interval_value = 1       # numeric value
 interval_unit = "hours"  # can be "minutes", "hours", or "daily_8_20"
-daily_times = ["08:00", "20:00"]  # 8:00AM & 8:00PM daily (local time)
+daily_times = ["08:00", "20:00"]  # e.g. 8:00AM & 8:00PM daily (local time)
 
+# We'll define these later in show_gui()
+changes_text = None
+
+###############################################################################
+# HELPER FUNCTIONS
+###############################################################################
 def load_product_urls():
     try:
         with open(URLS_FILE, 'r') as file:
@@ -28,9 +36,83 @@ def save_product_urls(urls):
     with open(URLS_FILE, 'w') as file:
         json.dump(urls, file, indent=4)
 
+def compute_48h_changes(df):
+    """
+    Returns a list of (nickname, price_diff) for products 
+    that have data within the last 48 hours.
+    price_diff = last_price - first_price in that window.
+    """
+    if df.empty:
+        return []
+
+    if 'date_only' not in df.columns or 'price' not in df.columns or 'nickname' not in df.columns:
+        return []
+
+    # Convert date_only to datetime if not already
+    df['date_only'] = pd.to_datetime(df['date_only'], errors='coerce')
+    df.dropna(subset=['date_only', 'price', 'nickname'], inplace=True)
+
+    if df.empty:
+        return []
+
+    latest_date = df['date_only'].max()
+    cutoff = latest_date - pd.Timedelta(hours=48)
+    recent_df = df[df['date_only'] >= cutoff].copy()
+
+    if recent_df.empty:
+        return []
+
+    # Sort by date so first is earliest, last is latest
+    recent_df.sort_values('date_only', inplace=True)
+
+    grouped = recent_df.groupby('nickname').agg(
+        first_price=('price', 'first'),
+        last_price=('price', 'last')
+    )
+    grouped['price_diff'] = grouped['last_price'] - grouped['first_price']
+    grouped.reset_index(inplace=True)
+
+    # Return list of tuples
+    changes = []
+    for _, row in grouped.iterrows():
+        changes.append((row['nickname'], row['price_diff']))
+
+    return changes
+
+def update_48h_changes():
+    """
+    Loads the latest 'price_history.csv', computes 48h changes,
+    then updates the 'changes_text' widget in the GUI.
+    """
+    global changes_text
+    try:
+        df = pd.read_csv("price_history.csv")
+        if df.empty:
+            changes_text.delete("1.0", tk.END)
+            changes_text.insert(tk.END, "No data in price_history.csv.")
+            return
+    except Exception as e:
+        changes_text.delete("1.0", tk.END)
+        changes_text.insert(tk.END, f"Error loading price_history.csv: {e}")
+        return
+
+    # Compute changes
+    changes = compute_48h_changes(df)
+
+    # Display them
+    changes_text.delete("1.0", tk.END)
+    if not changes:
+        changes_text.insert(tk.END, "No data or no price changes in the last 48 hours.")
+    else:
+        for (nick, diff) in changes:
+            changes_text.insert(tk.END, f"{nick}: {diff:+.2f}\n")
+
+###############################################################################
+# MAIN SCHEDULER / SCRIPTS
+###############################################################################
 def run_price_script():
     """
-    Run generate_data.py, then automatically run clean_data.py.
+    Runs generate_data.py, then clean_data.py, then updates 48h changes.
     """
     try:
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -47,14 +129,13 @@ def run_price_script():
         subprocess.run(["python", clean_data_path], check=True)
         print("Clean data script executed successfully.\n")
 
+        # 3) Update last 48h changes in the GUI
+        update_48h_changes()
+
     except Exception as e:
         print(f"Error running script: {e}\n")
 
 def set_interval(value, unit, current_frequency_label):
-    """
-    Updates the global interval_value and interval_unit.
-    Also updates the label so user knows which scheduling mode is selected.
-    """
     global interval_value, interval_unit
     interval_value = value
     interval_unit = unit
@@ -81,9 +162,9 @@ def start_scheduler():
 
     if not scheduler_running:
         scheduler_running = True
-        schedule.clear()  # Clear any old jobs to avoid duplicates
+        schedule.clear()  # Clear any old jobs
 
-        # Configure schedule based on interval_unit
+        import schedule
         if interval_unit == "minutes":
             schedule.every(interval_value).minutes.do(run_price_script)
             print(f"Scheduler started (every {interval_value} minute(s)).")
@@ -93,7 +174,6 @@ def start_scheduler():
             print(f"Scheduler started (every {interval_value} hour(s)).")
 
         elif interval_unit == "daily_8_20":
-            # Schedule run_price_script at 8:00AM and 8:00PM daily
             for t in daily_times:
                 schedule.every().day.at(t).do(run_price_script)
             print(f"Scheduler started (daily at {', '.join(daily_times)}).")
@@ -103,12 +183,10 @@ def start_scheduler():
             scheduler_running = False
             return
 
-        # Start the background thread for schedule
         scheduler_thread = threading.Thread(target=run_schedule, daemon=True)
         scheduler_thread.start()
 
-        # ---- RUN IMMEDIATELY ONCE ----
-        # This triggers the scraping and cleaning right away
+        # Run immediately once
         print("Running script immediately after scheduler start...")
         run_price_script()
     else:
@@ -122,8 +200,6 @@ def stop_scheduler():
         print("Scheduler stopped.")
 
 def toggle_scheduler(button, timestamp_label):
-    """Toggles the scheduler on/off, updates the button text & color, 
-       and sets a timestamp when turned on."""
     if scheduler_running:
         stop_scheduler()
         button.config(text="Start Scheduler", bg="green")
@@ -131,10 +207,12 @@ def toggle_scheduler(button, timestamp_label):
     else:
         start_scheduler()
         button.config(text="Stop Scheduler", bg="red")
-        # Update the timestamp label with the current time
         turned_on_time = time.strftime('%Y-%m-%d %H:%M:%S')
         timestamp_label.config(text=f"Scheduler turned ON at {turned_on_time}")
 
+###############################################################################
+# PRODUCT MANAGEMENT
+###############################################################################
 def add_product():
     nickname = nickname_entry.get().strip()
     url = url_entry.get().strip()
@@ -173,10 +251,32 @@ def refresh_product_list():
     for nickname in product_urls.keys():
         product_listbox.insert(tk.END, nickname)
 
+###############################################################################
+# NEW: RUN GRAPH.PY
+###############################################################################
+def run_graph_script():
+    """
+    Runs graph.py as a subprocess, which should open the graph interface/window
+    if graph.py is set up to do that.
+    """
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        graph_path = os.path.join(script_dir, "graph.py")
+
+        print("Running graph.py now...")
+        subprocess.run(["python", graph_path], check=True)
+        print("Graph script executed successfully.\n")
+
+    except Exception as e:
+        print(f"Error running graph script: {e}")
+
+###############################################################################
+# GUI INIT
+###############################################################################
 def show_gui():
     app = tk.Tk()
     app.title("Product Manager")
-    app.geometry("480x620")
+    app.geometry("520x780")
 
     # Frame for Adding Products
     add_frame = tk.Frame(app)
@@ -219,7 +319,6 @@ def show_gui():
     current_frequency_label = tk.Label(freq_frame, text="Current Frequency: Every 1 Hour(s)", font=("Arial", 10))
     current_frequency_label.pack(pady=5)
 
-    # Buttons for 1 Minute, 1 Hour, 6 Hours, 12 Hours
     btn_1m = tk.Button(freq_frame, text="Every 1 Minute",
                        command=lambda: set_interval(1, "minutes", current_frequency_label))
     btn_1m.pack(side="left", expand=True, fill="both", padx=2, pady=2)
@@ -231,7 +330,7 @@ def show_gui():
     btn_3h = tk.Button(freq_frame, text="Every 3 Hours",
                        command=lambda: set_interval(3, "hours", current_frequency_label))
     btn_3h.pack(side="left", expand=True, fill="both", padx=2, pady=2)
- 
+
     btn_6h = tk.Button(freq_frame, text="Every 6 Hours",
                        command=lambda: set_interval(6, "hours", current_frequency_label))
     btn_6h.pack(side="left", expand=True, fill="both", padx=2, pady=2)
@@ -240,26 +339,48 @@ def show_gui():
                         command=lambda: set_interval(12, "hours", current_frequency_label))
     btn_12h.pack(side="left", expand=True, fill="both", padx=2, pady=2)
 
-    # "8:00AM & 8:00PM" Button
     btn_8am_8pm = tk.Button(freq_frame, text="8:00 AM & 8:00 PM",
                             command=lambda: set_interval(None, "daily_8_20", current_frequency_label))
     btn_8am_8pm.pack(side="left", expand=True, fill="both", padx=2, pady=2)
 
-    # Scheduler ON/OFF Button & Timestamp Label
-    scheduler_button = tk.Button(
-        app,
-        text="Start Scheduler",
-        bg="green",
-        font=("Arial", 12),
-        width=20
-    )
+    # Scheduler Button & Timestamp
+    scheduler_button = tk.Button(app, text="Start Scheduler", bg="green",
+                                 font=("Arial", 12), width=20)
     scheduler_button.pack(pady=10)
 
     timestamp_label = tk.Label(app, text="Scheduler is OFF.", font=("Arial", 10), fg="blue")
     timestamp_label.pack(pady=5)
 
-    # Link the toggle_scheduler function to the button
     scheduler_button.config(command=lambda: toggle_scheduler(scheduler_button, timestamp_label))
+
+    # ---- Last 48h Changes Section ----
+    tk.Label(app, text="Last 48h Changes:", font=("Arial", 12)).pack(pady=5)
+    global changes_text
+    changes_text = tk.Text(app, width=60, height=8, wrap="word")
+    changes_text.pack(pady=5)
+
+    # A button to run generate_data.py + clean_data.py on demand
+    def on_check_changes_now():
+        run_price_script()  # triggers new data fetch + update_48h_changes
+
+    check_changes_btn = tk.Button(
+        app,
+        text="Check 48h Changes Now",
+        bg="lightgreen",
+        font=("Arial", 12),
+        command=on_check_changes_now
+    )
+    check_changes_btn.pack(pady=5)
+
+    # ---- NEW BUTTON: RUN GRAPH.PY ----
+    run_graph_btn = tk.Button(
+        app,
+        text="Open Graph Program",
+        bg="lightblue",
+        font=("Arial", 12),
+        command=run_graph_script
+    )
+    run_graph_btn.pack(pady=10)
 
     app.mainloop()
 
